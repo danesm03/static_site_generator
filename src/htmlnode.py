@@ -54,6 +54,39 @@ class LeafNode(HTMLNode):
                 return f'<{self.tag}>{self.value}</{self.tag}>'
           
 
+
+class ParentNode(HTMLNode):
+    def __init__(self, tag, children, props=None):
+        super().__init__(tag=tag, value=None, children=children, props=props)
+    
+    def to_html(self):
+        if not self.tag:
+            raise ValueError("Parent Node must have a tag")
+        
+        if not self.children:
+            raise ValueError("Parent Node must have children")
+        
+        else:
+            if len(self.children) == 0:
+                return ""
+            
+            concat_str = ""
+
+            for child in self.children:
+                concat_str += child.to_html()
+            
+            if self.props:
+                return f"<{self.tag}{self.props_to_html()}>{concat_str}</{self.tag}>"
+            else:
+                return f"<{self.tag}>{concat_str}</{self.tag}>"
+            
+
+
+        
+
+
+
+    
     
 
         

@@ -1,4 +1,4 @@
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 import unittest
 
 class TestHTMLNode(unittest.TestCase):
@@ -42,3 +42,41 @@ class TestLeafNode(unittest.TestCase):
     def test_leaf_to_html_noval(self):
         node = LeafNode("a", None, {"href": "https://boot.dev"})
         self.assertRaises(ValueError, node.to_html)
+
+
+
+class TestParentNode(unittest.TestCase):
+    def test_parent_to_html(self):
+        node = ParentNode(
+            "p",
+            [
+                LeafNode("b", "Bold text"),
+                LeafNode(None, "Normal text"),
+                LeafNode("i", "italic text"),
+                LeafNode(None, "Normal text"),
+            ],
+        )
+
+        self.assertEqual(node.to_html(), '<p><b>Bold text</b>Normal text<i>italic text</i>Normal text</p>')
+
+    def test_parent_to_html_with_ahref(self):
+        node = ParentNode(
+            "h1",
+            [
+                LeafNode("a", "Boot.Dev Dashboard", {"href": "https://boot.dev"}),
+                LeafNode("b", "This is some bold text"),
+            ]
+        )
+
+        self.assertEqual(node.to_html(), '<h1><a href="https://boot.dev">Boot.Dev Dashboard</a><b>This is some bold text</b></h1>')
+
+    def test_parent_to_html_with_prop(self):
+        node = ParentNode(
+            "a",
+            [
+                LeafNode("a", "Boot.Dev Dashboard", {"href": "https://boot.dev"}),
+                LeafNode("b", "This is some bold text"),
+            ],
+            {"href": "https://www.google.com"}
+        )
+        self.assertEqual(node.to_html(), '<a href="https://www.google.com"><a href="https://boot.dev">Boot.Dev Dashboard</a><b>This is some bold text</b></a>')
