@@ -1,4 +1,5 @@
-from htmlnode import HTMLNode, LeafNode, ParentNode
+from htmlnode import HTMLNode, LeafNode, ParentNode, text_node_to_html_node
+from textnode import TextNode, TextType
 import unittest
 
 class TestHTMLNode(unittest.TestCase):
@@ -80,3 +81,23 @@ class TestParentNode(unittest.TestCase):
             {"href": "https://www.google.com"}
         )
         self.assertEqual(node.to_html(), '<a href="https://www.google.com"><a href="https://boot.dev">Boot.Dev Dashboard</a><b>This is some bold text</b></a>')
+
+
+class TestTEXTNodetoHTMLNode(unittest.TestCase):
+    def test_text(self):
+        node = TextNode("This is a text node", TextType.TEXT)
+        html_node = text_node_to_html_node(node)
+        self.assertEqual(html_node.tag, None)
+        self.assertEqual(html_node.value, "This is a text node")
+
+    def test_link(self):
+        node = TextNode("This is a link node", TextType.LINK, url="https://www.google.com")
+        html_node = text_node_to_html_node(node)
+        self.assertEqual(html_node.props, {"href": "https://www.google.com"})
+        self.assertEqual(html_node.value, "This is a link node")
+
+    def test_img(self):
+        node = TextNode("This is an image node", TextType.IMAGE, url="https://www.google.com")
+        html_node = text_node_to_html_node(node)
+        self.assertEqual(html_node.props, {"src": "https://www.google.com", "alt": "This is an image node"})
+        self.assertEqual(html_node.value, "")
