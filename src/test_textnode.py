@@ -2,29 +2,44 @@ import unittest
 
 from textnode import TextNode, TextType
 from split_delimiter import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_links ,split_nodes_image, text_to_textnodes
+from markdown_blocks import markdown_to_blocks, BlockType, block_to_block_type
+
+
 
 
 class TestTextNode(unittest.TestCase):
+
+
     def test_eq(self):
         node = TextNode("This is a text node", TextType.BOLD)
         node2 = TextNode("This is a text node", TextType.BOLD)
         self.assertEqual(node, node2)
+
 
     def test_noteq(self):
         node = TextNode("This is a text node", TextType.BOLD, url="https://bood.dev")
         node2 = TextNode("This is a text node", TextType.BOLD)
         self.assertNotEqual(node, node2)
 
+
     def test_difftexttype(self):
         node = TextNode("This is a text node", TextType.BOLD)
         node2 = TextNode("This is a text node", TextType.TEXT)
         self.assertNotEqual(node, node2)
 
+
+
+
+
+
 class TestSplitDelimiter(unittest.TestCase):
+
+
     def test_code_split(self):
         node = TextNode("This is text with a `code block` word", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
         self.assertEqual(new_nodes, [TextNode("This is text with a ", TextType.TEXT), TextNode("code block", TextType.CODE), TextNode(" word", TextType.TEXT),])
+
 
     def test_bold_split(self):
         node = TextNode("This is text with a **bold** word", TextType.TEXT)
@@ -35,6 +50,7 @@ class TestSplitDelimiter(unittest.TestCase):
             TextNode(" word", TextType.TEXT),
         ])
 
+
     def test_italic_split(self):
         node = TextNode("This is text with a _italic_ word", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "_", TextType.ITALIC)
@@ -43,6 +59,7 @@ class TestSplitDelimiter(unittest.TestCase):
             TextNode("italic", TextType.ITALIC),
             TextNode(" word", TextType.TEXT),
         ])
+
 
     def test_delim_bold_multiword(self):
         node = TextNode(
@@ -57,12 +74,14 @@ class TestSplitDelimiter(unittest.TestCase):
                 TextNode("another", TextType.BOLD),
             ]
         )
-    
+
+
     def test_extract_markdown_images(self):
         matches = extract_markdown_images(
             "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
         )
         self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
 
     def text_extract_multiple_img(self):
         matches = extract_markdown_images(
@@ -70,12 +89,14 @@ class TestSplitDelimiter(unittest.TestCase):
         )
         self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png"), ("one, https://www.google.com")], matches)    
 
+
     def text_extract_md_links(self):
         matches = extract_markdown_links(
             "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
             )
         self.assertEqual(matches, [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")])
-        
+
+
     def test_split_images(self):
         node = TextNode(
             "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
@@ -94,6 +115,7 @@ class TestSplitDelimiter(unittest.TestCase):
             new_nodes,
         )
 
+
     def test_split_images_text_after(self):
         node = TextNode(
             "Hello ![img](https://www.google.com) world",
@@ -109,7 +131,8 @@ class TestSplitDelimiter(unittest.TestCase):
                             TextNode(" world", TextType.TEXT)
                           ]
         )
-    
+
+
     def test_split_links(self):
         node = TextNode(
             "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)", 
@@ -121,6 +144,7 @@ class TestSplitDelimiter(unittest.TestCase):
             TextNode(" and ", TextType.TEXT),
             TextNode("to youtube", TextType.LINK, url="https://www.youtube.com/@bootdotdev"),
         ])
+
 
     def test_split_links_listed(self):
         nodes = [
@@ -171,6 +195,92 @@ class TestSplitDelimiter(unittest.TestCase):
 
         ])
 
+
+
+
+
+
+class TestMarkdownBlocks(unittest.TestCase):
+
+
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+
+    def test_markdown_with_headers(self):
+        md = """
+# Header One
+
+This is a paragraph under a header.
+
+## Subheader
+
+Another paragraph after the subheader
+with a newline inside the same block.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "# Header One",
+                "This is a paragraph under a header.",
+                "## Subheader",
+                "Another paragraph after the subheader\nwith a newline inside the same block.",
+            ],
+        )
+
+
+    def test_markdown_mixed_formatting(self):
+        md = """
+Normal text paragraph
+
+> This is a blockquote
+> spanning multiple
+> lines.
+
+Another **bold** and _italic_ paragraph.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "Normal text paragraph",
+                "> This is a blockquote\n> spanning multiple\n> lines.",
+                "Another **bold** and _italic_ paragraph.",
+            ],
+        )
+
+
+    def test_block_to_block_types(self):
+        block = "# heading"
+        self.assertEqual(block_to_block_type(block), BlockType.HEADING)
+        block = "```\ncode\n```"
+        self.assertEqual(block_to_block_type(block), BlockType.CODE)
+        block = "> quote\n> more quote"
+        self.assertEqual(block_to_block_type(block), BlockType.QUOTE)
+        block = "- list\n- items"
+        self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LIST)
+        block = "1. list\n2. items"
+        self.assertEqual(block_to_block_type(block), BlockType.ORDERED_LIST)
+        block = "paragraph"
+        self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
 
 if __name__ == "__main__":
     unittest.main()
