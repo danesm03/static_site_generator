@@ -313,5 +313,17 @@ the **same** even with inline stuff
         )
 
 
+
+
+    def test_extract_title(self):
+        md = """
+#This is the header
+
+##This should not be returned
+And **neither should this**
+"""
+        title = extract_title(md)
+        self.assertEqual(title, "This is the header")
+
 if __name__ == "__main__":
     unittest.main()

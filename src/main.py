@@ -24,7 +24,6 @@ def copy_directory(dir, target_dir, is_initial_call=True):
     directory_list = os.listdir(dir)
     #target_dir_list = os.listdir(target_dir)
     
-    
     #recursive copying
     for item in directory_list:
         joined_path = os.path.join(dir, item)
@@ -38,10 +37,44 @@ def copy_directory(dir, target_dir, is_initial_call=True):
 
 
 
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    if not os.path.exists(dest_path):
+        with open(dest_path, "x") as f:
+            pass
+    #read and store the from path and template
+    from_path_file = open(from_path, "r")
+    fromfile = from_path_file.read()
+    template_path_file = open(template_path, "r")
+    template_file = template_path_file.read()
+    dest_path_file = open(dest_path, "r")
+    #dest_file = dest_path_file.read()
+
+    md_html_node = markdown_to_html_node(fromfile)
+    md_html= md_html_node.to_html()
+    print(f"\n\n\n\n**HTML** : \n\n{md_html}")
+    page_title = extract_title(fromfile)
+    new_template_file = template_file.replace(
+        "{{ Title }}",
+        page_title).replace(
+            "{{ Content }}",
+            md_html
+            )
+    
+    with open(dest_path, "w") as f:
+        f.write(new_template_file)
+        #print(f"wrote file {dest_file} at {dest_path}")
+
+
+
+    
+
+
     
 
 def main():
     copy_directory("static/", "public/")
+    generate_page("content/index.md", "template.html", "public/index.html")
 
 
 if __name__ == "__main__":
