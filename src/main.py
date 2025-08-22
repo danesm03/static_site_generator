@@ -65,6 +65,37 @@ def generate_page(from_path, template_path, dest_path):
         f.write(new_template_file)
         #print(f"wrote file {dest_file} at {dest_path}")
 
+def list_contents(dir_path_content):
+
+    contents_list = []
+    #os.listdir(dir_path_content)
+    for item in os.listdir(dir_path_content):
+        full_path = os.path.join(dir_path_content,item)
+        contents_list.append(full_path)
+        if os.path.isdir(full_path):
+            contents_list.extend(list_contents(full_path))
+    
+
+    return contents_list
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    content_list = list_contents(dir_path_content)
+
+    for item in content_list:
+        if item.startswith(dir_path_content):
+            revised_item_name = item[len(dir_path_content):]
+            if revised_item_name.startswith("/"):
+                revised_item_name = revised_item_name[1:]
+        if revised_item_name.endswith('.md'):
+            no_suff = revised_item_name.removesuffix('.md') + ".html"
+            full_dest_path = os.path.join(dest_dir_path, no_suff)
+            target_dir = os.path.dirname(full_dest_path)
+            if os.path.exists(target_dir):
+                generate_page(item, template_path, os.path.join(dest_dir_path,no_suff))
+            else:
+                os.makedirs(target_dir)
+                generate_page(item, template_path, os.path.join(dest_dir_path, no_suff))
+
 
 
     
@@ -74,7 +105,7 @@ def generate_page(from_path, template_path, dest_path):
 
 def main():
     copy_directory("static/", "public/")
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content/", "template.html", "public/")
 
 
 if __name__ == "__main__":
