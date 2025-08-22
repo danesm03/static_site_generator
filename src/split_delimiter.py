@@ -33,32 +33,33 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     
 
 def split_nodes_image(old_nodes):
-    final_list = []
-    for node in old_nodes:
-        if node.text_type != TextType.TEXT:
-            final_list.append(node)
-        else:
-            if node.text == "":
-                continue
-            text_list = []
-            img_list = extract_markdown_images(node.text)
-            current_text = node.text
-            for image_text, image_link in img_list:
-                sections = current_text.split(f"![{image_text}]({image_link})", maxsplit=1)
-                if len(sections) != 2:
-                    raise ValueError("invalid markdown, image section not closed")
-                text_list.append(sections[0])
-                current_text = sections[1]
-            if len(img_list) > 0:
-                for index, item in enumerate(text_list):
-                    if item == "":
-                        continue
-                    final_list.append(TextNode(item,  TextType.TEXT))
-                    final_list.append(TextNode(img_list[index][0], TextType.IMAGE, url=img_list[index][1]))
-
-            if current_text != "":
-                final_list.append(TextNode(current_text, TextType.TEXT))
-    return final_list
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
+        original_text = old_node.text
+        images = extract_markdown_images(original_text)
+        if len(images) == 0:
+            new_nodes.append(old_node)
+            continue
+        for image in images:
+            sections = original_text.split(f"![{image[0]}]({image[1]})", 1)
+            if len(sections) != 2:
+                raise ValueError("invalid markdown, image section not closed")
+            if sections[0] != "":
+                new_nodes.append(TextNode(sections[0], TextType.TEXT))
+            new_nodes.append(
+                TextNode(
+                    image[0],
+                    TextType.IMAGE,
+                    image[1],
+                )
+            )
+            original_text = sections[1]
+        if original_text != "":
+            new_nodes.append(TextNode(original_text, TextType.TEXT))
+    return new_nodes
 
                 
             
@@ -100,12 +101,10 @@ def text_to_textnodes(text):
     split_bold = split_nodes_delimiter([node], "**", TextType.BOLD)
     split_italic = split_nodes_delimiter(split_bold, "_", TextType.ITALIC)
     split_code = split_nodes_delimiter(split_italic, "`", TextType.CODE)
-    split_links = split_nodes_links(split_code)
-    split_image = split_nodes_image(split_links)
-    print("DEBUG: split_image nodes for text:", text)
-    for n in split_image:
-        print("  node:", n, "type:", n.text_type)
-    return split_image
+    split_image = split_nodes_image(split_code)
+    split_links = split_nodes_links(split_image)
+
+    return split_links
 
 
 
